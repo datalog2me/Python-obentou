@@ -1,4 +1,4 @@
-お弁当の需要予測を重回帰分析を用いて実践
+Python,Pandasライブラリ、お弁当の需要予測を重回帰分析を用いて実践、実験してみた。毛利元哉
 
 1. データの準備（データセットの読み込み）
 import pandas as pd
@@ -42,7 +42,7 @@ y_train = train['y']
 
 
 2. モデルの準備
-冒頭でimportしたLinearRegressionを使ってモデルの定義をします。
+冒頭でimportしたLinearRegressionを使ってモデルを定義する。
 
 # モデルの定義
 model = LR()
@@ -95,9 +95,9 @@ sample.to_csv('submit3.csv', index=None, header=None)
 
 
 ６実際と比較してみる
-次に、X_trainに対する予測値と、実際の売り上げyとを引き算することで、どの日が大きく予測を外していたかを確認します。
+次に、X_trainに対する予測値と、実際の売り上げyとを引き算することで、どの日が大きく予測を外していたかを確認。
 
-まず、model1とX_trainを使って、X_trainに対する予測値を求めてみます。
+まず、model1とX_trainを使って、X_trainに対する予測値を求めて。
 
 
 pred = model1.predict(X_train)
