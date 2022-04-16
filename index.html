@@ -1,0 +1,169 @@
+お弁当の需要予測を重回帰分析を用いて実践
+
+1. データの準備（データセットの読み込み）
+import pandas as pd
+import numpy as np
+from matplotlib import pyplot as plt
+from sklearn.linear_model import LinearRegression as LR # 線形回帰のモデル
+%matplotlib inline
+
+train = pd.read_csv('train.csv') # 学習データの読み込み
+test = pd.read_csv('test.csv') # 検証データの読み込み
+sample = pd.read_csv('sample.csv', header=None) # 提出用サンプルデータの読み込み
+
+# データ確認
+train.head()
+
+
+
+各曜日がどれくらい存在しているのか確認。
+
+train['week'].value_counts()
+#> 水    43
+#> 木    43
+#> 火    41
+#> 金    41
+#> 月    39
+５種類の曜日が設定されていた。
+ダミー変数化。
+
+# 説明変数として使用する week と temperature をダミー変数化しながら X_trainに設定
+X_train = pd.get_dummies(train[['week', 'temperature']])
+
+X_train.head()
+
+
+目的変数も用意しておく。
+
+y_train = train['y']
+
+
+
+
+
+2. モデルの準備
+冒頭でimportしたLinearRegressionを使ってモデルの定義をします。
+
+# モデルの定義
+model = LR()
+
+
+3. モデルの作成
+重回帰モデルを生成します。
+
+model.fit(X_train, y_train)
+学習後モデルの傾きや切片を確認してみます。
+
+model.coef_ #傾き
+# > array([-2.53878074,  8.26339936, -9.47240196, -2.02873774,  1.85251984, 1.38522051])
+
+model.intercept_ #切片
+# > 135.69119841401601
+傾きが複数個あるのは、それぞれ、気温に関する係数、月曜日に関する係数…となっているからです。
+
+
+
+
+
+4. 予測
+では、実際に売上数を予測し。
+予測にはpredict関数を使用。
+
+# 検証用データ
+X_test = pd.get_dummies(test[['week', 'temperature']])
+
+# 予測
+pred = model.predict(X_test)
+print(pred)
+# > [ 82.37908978  65.54193684  64.21341177  89.37081192  81.43666396
+# >   74.5088695   69.09622987  70.81424168  69.5043945   94.05748117
+# >   78.99747474  78.68446197  83.27773815  86.26034736  94.31135925
+# >   88.89871962  89.60121914  86.32427504  89.05300617  83.90235823
+# >   76.45869401  89.34734106  89.56076232  93.04196888  77.4742063
+# >   86.0469261   90.13244614 100.22364142  97.10401806  76.71257208
+# >   96.96368327 107.65003323  96.66934838  95.83462769  99.56159871
+# >   99.24858594 108.60161785 110.30567789  87.88320732  98.23307364]
+
+
+5. 評価
+signateに提出してモデルを評価するためにCSV出力を行い、提出。
+
+sample[1] = pred
+sample.to_csv('submit3.csv', index=None, header=None)
+
+
+
+
+６実際と比較してみる
+次に、X_trainに対する予測値と、実際の売り上げyとを引き算することで、どの日が大きく予測を外していたかを確認します。
+
+まず、model1とX_trainを使って、X_trainに対する予測値を求めてみます。
+
+
+pred = model1.predict(X_train)
+
+# predをtrainの新たなカラムpredとして代入
+train['pred'] = pred
+train.head()
+
+
+
+
+# trainのyとpredを引き算した結果をtrainの新たなカラムresとして代入
+train['res'] = train['y'] - train['pred']
+
+# ソートして中身を確認
+train.sort_values(by='res')
+
+
+
+
+データを見てみると、プラス方向へズレが大きいデータはremarksカラムにお楽しみメニューという文字列が設定されていることが分かる。
+これでうまく特徴量を作成することができれば、プラス方向へズレが大きいデータを減らすことができる。
+
+
+まず、値が「お楽しみメニュー」であれば１、そうでなければ0とする関数を作成し。
+そして、その関数を用いて新たなカラムfunを作る。
+
+# 関数
+def jisaku1(x):
+    if x == 'お楽しみメニュー':
+        return 1
+    else:
+        return 0
+
+train['fun'] = train['remarks'].apply(lambda x : jisaku1(x))
+test['fun'] = test['remarks'].apply(lambda x : jisaku1(x))
+データを確認してみましょう
+
+train.sort_values(by='fun', ascending=False)[:10]
+train.sort_values(by='fun', ascending=True)[:10]
+
+
+
+
+
+ここで、今までの特徴量yearとmonthに加え、funとtemperatureも特徴量として、重回帰分析を実践。
+
+その後、今まで通りCSV出力して、signateへ提出。
+
+
+X_train = train[['yaer', 'month', 'fun', 'temperature']]
+X_test = test[['year', 'month', 'fun', 'temperature']]
+
+model2 = LR()
+
+model2.fit(X_train, y_train)
+
+pred2 = model2.predict(X_test)
+sample[1] = pred2
+sample.to_csv('submit5.csv', index=None, header=None)
+
+
+
+13.25657というスコアが表示された。
+
+
+
+
+
